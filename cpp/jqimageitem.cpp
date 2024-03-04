@@ -216,12 +216,12 @@ private:
 
         auto current = reinterpret_cast< VertexTextureVBO * >( vboBuffer.data() );
 
-        current->vertexX = -1.00001f; current->vertexY = -1.00001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
-        current->vertexX = -1.00001f; current->vertexY =  1.00001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 1; ++current;
-        current->vertexX =  1.00001f; current->vertexY =  1.00001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
-        current->vertexX =  1.00001f; current->vertexY =  1.00001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
-        current->vertexX =  1.00001f; current->vertexY = -1.00001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 0; ++current;
-        current->vertexX = -1.00001f; current->vertexY = -1.00001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
+        current->vertexX = -1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
+        current->vertexX = -1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 1; ++current;
+        current->vertexX =  1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
+        current->vertexX =  1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
+        current->vertexX =  1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 0; ++current;
+        current->vertexX = -1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
 
         return createVAOFromByteArray(
             vboBuffer,
