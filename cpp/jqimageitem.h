@@ -3,6 +3,7 @@
 
 // Qt lib import
 #include <QObject>
+#include <QMutex>
 #include <QImage>
 #include <QQuickPaintedItem>
 #include <QQuickFramebufferObject>
@@ -49,6 +50,7 @@ private:
     void paint(QPainter *painter) override;
 
 private:
+    QMutex mutex_;
     QImage buffer_;
 };
 
