@@ -5,7 +5,7 @@ import JQImageItem 1.0
 
 Window {
     id: window
-    width: 1280
+    width: 720
     height: 720
     visible: true
     color: "#000000"
