@@ -93,7 +93,7 @@ private:
 
         program_->setUniformValue( program_->uniformLocation( "colorTexture" ), 0 );
 
-        backgroundVAO_ = vertexTextureToVAO( this );
+        imageVAO_ = vertexTextureToVAO( this );
 
         return true;
     }
@@ -114,39 +114,42 @@ private:
         {
             QMutexLocker locker( &mutex_ );
 
-            if ( backgroundTexture_ && ( QSize( backgroundTexture_->width(), backgroundTexture_->height() ) == buffer_.size() ) )
+            if ( imageTexture_ && ( QSize( imageTexture_->width(), imageTexture_->height() ) == buffer_.size() ) )
             {
                 // 根据图片类型选择合适的setData
                 if ( buffer_.format() == QImage::Format_RGB32 )
                 {
                     clearColorBeforPaint_ = false;
-                    backgroundTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
+                    imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_ARGB32 )
                 {
                     clearColorBeforPaint_ = true;
-                    backgroundTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
+                    imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_RGB888 )
                 {
                     clearColorBeforPaint_ = false;
-                    backgroundTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer_.constBits() );
+                    imageTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else
                 {
+                    imageTexture_.clear();
+                    buffer_ = { };
+
                     qDebug() << "JQImageItemRenderer::render: unsupported image format:" << buffer_.format();
                     return;
                 }
             }
             else
             {
-                backgroundTexture_.reset( new QOpenGLTexture( buffer_ ) );
+                imageTexture_.reset( new QOpenGLTexture( buffer_ ) );
             }
 
             buffer_ = { };
         }
 
-        if ( !program_ || !backgroundTexture_ ) { return; }
+        if ( !program_ || !imageTexture_ ) { return; }
 
         // 带透明数据时先清空老的数据
         if ( clearColorBeforPaint_ )
@@ -155,13 +158,13 @@ private:
         }
 
         program_->bind();
-        backgroundVAO_->bind();
-        backgroundTexture_->bind();
+        imageVAO_->bind();
+        imageTexture_->bind();
 
         this->glDrawArrays( GL_TRIANGLES, 0, 6 );
 
-        backgroundTexture_->release();
-        backgroundVAO_->release();
+        imageTexture_->release();
+        imageVAO_->release();
         program_->release();
     }
 
@@ -243,8 +246,8 @@ private:
     bool clearColorBeforPaint_ = true;
 
     QSharedPointer< QOpenGLShaderProgram >     program_;
-    QSharedPointer< QOpenGLTexture >           backgroundTexture_;
-    QSharedPointer< QOpenGLVertexArrayObject > backgroundVAO_;
+    QSharedPointer< QOpenGLTexture >           imageTexture_;
+    QSharedPointer< QOpenGLVertexArrayObject > imageVAO_;
 };
 
 // JQImageItem
