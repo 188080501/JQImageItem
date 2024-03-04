@@ -54,7 +54,7 @@ private:
     {
         this->initializeOpenGLFunctions();
 
-        program_.reset( new QOpenGLShaderProgram );
+        auto program = new QOpenGLShaderProgram;
 
         auto vertexData = getGlslData( vertexShader );
         if ( vertexData.isEmpty() )
@@ -70,27 +70,28 @@ private:
             return false;
         }
 
-        if ( !program_->addShaderFromSourceCode( QOpenGLShader::Vertex, vertexData ) )
+        if ( !program->addShaderFromSourceCode( QOpenGLShader::Vertex, vertexData ) )
         {
             qDebug() << "JQImageItemRenderer: add vertex shader error";
             return false;
         }
 
-        if ( !program_->addShaderFromSourceCode( QOpenGLShader::Fragment, fragmentData ) )
+        if ( !program->addShaderFromSourceCode( QOpenGLShader::Fragment, fragmentData ) )
         {
             qDebug() << "JQImageItemRenderer: add fragment shader error";
             return false;
         }
 
-        program_->bindAttributeLocation( "rawVertex", 0 );
-        program_->bindAttributeLocation( "rawTexturePos", 1 );
+        program->bindAttributeLocation( "rawVertex", 0 );
+        program->bindAttributeLocation( "rawTexturePos", 1 );
 
-        if ( !program_->link() )
+        if ( !program->link() )
         {
             qDebug() << "JQImageItemRenderer: add fragment shader error";
             return false;
         }
 
+        program_.reset( program );
         program_->setUniformValue( program_->uniformLocation( "colorTexture" ), 0 );
 
         imageVAO_ = generateVAOData();
