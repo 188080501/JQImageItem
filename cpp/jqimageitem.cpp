@@ -144,6 +144,8 @@ private:
 
         if ( !program_ || !backgroundTexture_ ) { return; }
 
+        this->glClear( GL_COLOR_BUFFER_BIT );
+
         program_->bind();
         backgroundVAO_->bind();
         backgroundTexture_->bind();
