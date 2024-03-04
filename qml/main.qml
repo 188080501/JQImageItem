@@ -13,10 +13,7 @@ Window {
     JQImageItem {
         id: imageItem
         anchors.fill: parent
-
-        Component.onCompleted: {
-            Helper.setImageItem( this );
-        }
+        visible: false
     }
 
     JQImageItem2 {
@@ -25,33 +22,56 @@ Window {
         visible: false
     }
 
-    Button {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 20
-        width: 80
-        height: 35
-        checkable: true
-        checked: true
-        text: ( checked ) ? ( "Item" ) :( "Item2" )
+    MouseArea {
+        anchors.fill: parent
 
-        onClicked: {
-            if ( checked )
+        function update() {
+            imageItem.visible  = !imageItem.visible;
+            imageItem2.visible = !imageItem.visible;
+
+            if ( imageItem.visible )
             {
                 Helper.setImageItem( imageItem );
                 Helper.setImageItem2( null );
-
-                imageItem.visible  = true;
-                imageItem2.visible = false;
             }
             else
             {
                 Helper.setImageItem( null );
                 Helper.setImageItem2( imageItem2 );
-
-                imageItem.visible  = false;
-                imageItem2.visible = true;
             }
+        }
+
+        onClicked: {
+            update();
+        }
+
+        Component.onCompleted: {
+            update();
+        }
+    }
+
+    Text {
+        x: 15
+        y: 15
+        font.pixelSize: 15
+        color: "#ff00ff"
+        text: {
+            var result = "";
+
+            result += window.width.toString();
+            result += " x ";
+            result += window.height.toString();
+
+            if ( imageItem.visible )
+            {
+                result += "\nJQImageItem";
+            }
+            else if ( imageItem2.visible )
+            {
+                result += "\nJQImageItem2";
+            }
+
+            return result;
         }
     }
 }
