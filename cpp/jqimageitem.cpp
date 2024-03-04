@@ -118,14 +118,17 @@ private:
             {
                 if ( buffer_.format() == QImage::Format_RGB32 )
                 {
+                    clearColorBeforPaint_ = false;
                     backgroundTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_ARGB32 )
                 {
+                    clearColorBeforPaint_ = true;
                     backgroundTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_RGB888 )
                 {
+                    clearColorBeforPaint_ = false;
                     backgroundTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else
@@ -144,7 +147,11 @@ private:
 
         if ( !program_ || !backgroundTexture_ ) { return; }
 
-        this->glClear( GL_COLOR_BUFFER_BIT );
+        // 带透明数据时先清空老的数据
+        if ( clearColorBeforPaint_ )
+        {
+            this->glClear( GL_COLOR_BUFFER_BIT );
+        }
 
         program_->bind();
         backgroundVAO_->bind();
@@ -230,6 +237,8 @@ private:
 
 private:
     QImage buffer_;
+
+    bool clearColorBeforPaint_ = true;
 
     QSharedPointer< QOpenGLShaderProgram >     program_;
     QSharedPointer< QOpenGLTexture >           backgroundTexture_;
