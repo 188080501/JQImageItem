@@ -29,6 +29,8 @@ Window {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 20
+        width: 80
+        height: 35
         checkable: true
         checked: true
         text: ( checked ) ? ( "Item" ) :( "Item2" )

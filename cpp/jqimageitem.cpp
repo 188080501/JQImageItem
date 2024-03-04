@@ -5,10 +5,39 @@
 #include <QDebug>
 #include <QMutex>
 #include <QPainter>
+#include <QThread>
 #include <QOpenGLFunctions>
 #include <QOpenGLFramebufferObjectFormat>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLTexture>
+#include <QOpenGLBuffer>
 
 static QMutex mutex_;
+
+#if ( defined Q_CC_MSVC ) || ( ( defined Q_OS_MAC ) && !( defined Q_OS_IOS ) ) || ( ( defined Q_OS_LINUX ) && !( defined Q_OS_ANDROID ) )
+#   define IS_DESKTOP
+#endif
+
+static const char vertexShader[] =
+    "attribute vec4 rawVertex;"
+    "attribute vec2 rawTexture;"
+    "varying vec2 currentTexture;"
+    "void main()"
+    "{"
+    "    currentTexture = rawTexture;"
+    "    gl_Position    = rawVertex;"
+    "}";
+
+static const char fragmentShader[] =
+    "varying vec2 currentTexture;"
+    "uniform sampler2D colorTexture;"
+    "void main()"
+    "{"
+    "    vec4 textureColor = texture2D( colorTexture, currentTexture );"
+    "    if ( textureColor.w < 0.001 ) { discard; }"
+    "    gl_FragColor = textureColor;"
+    "}";
 
 // JQImageItemRenderer
 class JQImageItemRenderer: public QQuickFramebufferObject::Renderer, protected QOpenGLFunctions
@@ -18,92 +47,206 @@ class JQImageItemRenderer: public QQuickFramebufferObject::Renderer, protected Q
 public:
     JQImageItemRenderer() = default;
 
-    ~JQImageItemRenderer()
-    {
-        QMutexLocker locker( &mutex_ );
+    ~JQImageItemRenderer() = default;
 
-        if ( texture > 0 )
+private:
+    bool init()
+    {
+        this->initializeOpenGLFunctions();
+
+        program_.reset( new QOpenGLShaderProgram );
+
+        auto vertexData = getGlslData( vertexShader );
+        if ( vertexData.isEmpty() )
         {
-            glDeleteTextures( 1, &texture );
-            texture = 0;
+            qDebug() << "JQImageItemRenderer: read glsl file error";
+            return false;
         }
+
+        auto fragmentData = getGlslData( fragmentShader );
+        if ( fragmentData.isEmpty() )
+        {
+            qDebug() << "JQImageItemRenderer: read glsl file error";
+            return false;
+        }
+
+        if ( !program_->addShaderFromSourceCode( QOpenGLShader::Vertex, vertexData ) )
+        {
+            qDebug() << "JQImageItemRenderer: add vertex shader error";
+            return false;
+        }
+
+        if ( !program_->addShaderFromSourceCode( QOpenGLShader::Fragment, fragmentData ) )
+        {
+            qDebug() << "JQImageItemRenderer: add fragment shader error";
+            return false;
+        }
+
+        program_->bindAttributeLocation( "rawVertex", 0 );
+        program_->bindAttributeLocation( "rawTexturePos", 1 );
+
+        if ( !program_->link() )
+        {
+            qDebug() << "JQImageItemRenderer: add fragment shader error";
+            return false;
+        }
+
+        program_->setUniformValue( program_->uniformLocation( "colorTexture" ), 0 );
+
+        struct VertexTextureVBO
+        {
+            float vertexX;
+            float vertexY;
+            float vertexZ;
+
+            float textureX;
+            float textureY;
+        };
+
+        backgroundVAO_ = vertexTextureToVAO( this );
+
+        return true;
     }
 
-public:
+    QByteArray getGlslData(const char *rawData)
+    {
+        QByteArray result;
+#ifndef IS_DESKTOP
+        result.append( QByteArrayLiteral( "precision highp float;\n" ) );
+#endif
+        result.append( rawData );
+        return result;
+    }
+
     void render() override
     {
         if ( !buffer_.isNull() )
         {
             QMutexLocker locker( &mutex_ );
 
-            if ( buffer_.format() != QImage::Format_RGB888 )
+            if ( backgroundTexture_ && ( QSize( backgroundTexture_->width(), backgroundTexture_->height() ) == buffer_.size() ) )
             {
-                qDebug() << "JQImageItemRenderer::render: unsupported image format:" << buffer_.format();
-                return;
-            }
-
-            if ( ( texture > 0 ) && ( textureSize == buffer_.size() ) )
-            {
-                // 有纹理并且大小匹配时直接更新纹理，避免创建的开销
-                glBindTexture( GL_TEXTURE_2D, texture );
-                glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, buffer_.width(), buffer_.height(), GL_RGB, GL_UNSIGNED_BYTE, buffer_.constBits() );
+                if ( buffer_.format() == QImage::Format_RGB32 )
+                {
+                    backgroundTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
+                }
+                else if ( buffer_.format() == QImage::Format_ARGB32 )
+                {
+                    backgroundTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
+                }
+                else if ( buffer_.format() == QImage::Format_RGB888 )
+                {
+                    backgroundTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer_.constBits() );
+                }
+                else
+                {
+                    qDebug() << "JQImageItemRenderer::render: unsupported image format:" << buffer_.format();
+                    return;
+                }
             }
             else
             {
-                if ( texture > 0 )
-                {
-                    glDeleteTextures( 1, &texture );
-                    texture = 0;
-                }
-
-                // 创建纹理
-                glGenTextures( 1, &texture );
-                glBindTexture( GL_TEXTURE_2D, texture );
-
-                // 设置纹理参数
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-
-                // 上传纹理数据
-                glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, buffer_.width(), buffer_.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, buffer_.constBits() );
-                textureSize = buffer_.size();
+                backgroundTexture_.reset( new QOpenGLTexture( buffer_ ) );
             }
 
             buffer_ = { };
         }
 
-        if ( texture == 0 ) { return; }
+        if ( !program_ || !backgroundTexture_ ) { return; }
 
-        glBindTexture( GL_TEXTURE_2D, texture );
+        program_->bind();
+        backgroundVAO_->bind();
+        backgroundTexture_->bind();
 
-        // 将纹理附加到FBO上
-        glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0 );
+        this->glDrawArrays( GL_TRIANGLES, 0, 6 );
 
-        // 完成后解绑FBO和纹理
-        glBindTexture( GL_TEXTURE_2D, 0 );
-        glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+        backgroundTexture_->release();
+        backgroundVAO_->release();
+        program_->release();
     }
 
     QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override
     {
-        QOpenGLFramebufferObjectFormat format;
-        format.setAttachment( QOpenGLFramebufferObject::CombinedDepthStencil );
-        format.setSamples( 1 );
-        format.setMipmap( false );
-        return new QOpenGLFramebufferObject( size, format );
+        return new QOpenGLFramebufferObject( size, QOpenGLFramebufferObject::NoAttachment );
+    }
+
+    QSharedPointer< QOpenGLVertexArrayObject > createVAOFromByteArray(
+        const QByteArray &            data,
+        const std::function< void() > glBindCallback )
+    {
+        auto vbo = new QOpenGLBuffer( QOpenGLBuffer::Type::VertexBuffer );
+
+        QSharedPointer< QOpenGLVertexArrayObject > vao;
+        vao.reset(
+            new QOpenGLVertexArrayObject,
+            [ vbo ](QOpenGLVertexArrayObject *vao)
+            { if ( !qApp ) { return; } vao->destroy(); delete vao; vbo->destroy(); delete vbo; } );
+
+        vao->create();
+        vao->bind();
+
+        vbo->create();
+        vbo->bind();
+
+        vbo->allocate( data.size() );
+        vbo->write( 0, data.constData(), data.size() );
+
+        glBindCallback();
+
+        vbo->release();
+        vao->release();
+
+        return vao;
+    }
+
+    QSharedPointer< QOpenGLVertexArrayObject > vertexTextureToVAO(
+        QOpenGLFunctions *gl )
+    {
+        struct VertexTextureVBO
+        {
+            float vertexX;
+            float vertexY;
+            float vertexZ;
+
+            float textureX;
+            float textureY;
+        };
+
+        QByteArray vboBuffer;
+        vboBuffer.resize( 6 * static_cast< int >( sizeof( VertexTextureVBO ) ) );
+
+        auto current = reinterpret_cast< VertexTextureVBO * >( vboBuffer.data() );
+
+        current->vertexX = -1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
+        current->vertexX = -1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 1; ++current;
+        current->vertexX =  1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
+        current->vertexX =  1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
+        current->vertexX =  1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 0; ++current;
+        current->vertexX = -1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
+
+        return createVAOFromByteArray(
+            vboBuffer,
+            [ = ]()
+            {
+                gl->glEnableVertexAttribArray( 0 );
+                gl->glEnableVertexAttribArray( 1 );
+
+                gl->glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( VertexTextureVBO ), nullptr );
+                gl->glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof( VertexTextureVBO ), reinterpret_cast< void * >( 12 ) );
+            } );
     }
 
 private:
-    GLuint texture = 0;
-    QSize  textureSize;
     QImage buffer_;
+
+    QSharedPointer< QOpenGLShaderProgram >     program_;
+    QSharedPointer< QOpenGLTexture >           backgroundTexture_;
+    QSharedPointer< QOpenGLVertexArrayObject > backgroundVAO_;
 };
 
 // JQImageItem
 JQImageItem::JQImageItem()
 {
-    this->setMirrorVertically( false );
-
     renderer_ = new JQImageItemRenderer;
 }
 
@@ -116,13 +259,25 @@ void JQImageItem::setImage(const QImage &image)
 {
     QMutexLocker locker( &mutex_ );
 
-    if ( !image.isNull() && ( image.size() != this->size().toSize() ) )
+    if ( !image.isNull() )
     {
-        renderer_->buffer_ = image.scaled( this->size().toSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation ).convertToFormat( QImage::Format_RGB888 );
+        if ( ( image.width() < this->width() ) && ( image.height() < this->height() ) )
+        {
+            renderer_->buffer_ = image;
+        }
+        else
+        {
+            renderer_->buffer_ = image.scaled( this->size().toSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+        }
     }
     else
     {
         renderer_->buffer_ = image;
+    }
+
+    if ( renderer_->buffer_.format() == QImage::Format_ARGB32_Premultiplied )
+    {
+        renderer_->buffer_ = renderer_->buffer_.convertToFormat( QImage::Format_ARGB32 );
     }
 
     QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
@@ -130,7 +285,7 @@ void JQImageItem::setImage(const QImage &image)
 
 QQuickFramebufferObject::Renderer *JQImageItem::createRenderer() const
 {
-    renderer_->initializeOpenGLFunctions();
+    renderer_->init();
 
     return renderer_;
 }

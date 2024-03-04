@@ -27,7 +27,7 @@ void Helper::setImageItem2(JQImageItem2 *imageItem2)
 
 void Helper::displayLoop()
 {
-    const auto image1 = QImage( ":/images/1.png" );
+    const auto image1 = QImage( ":/images/3.png" );
 
     while ( continueRun_ )
     {
@@ -43,4 +43,6 @@ void Helper::displayLoop()
             imageItem2_->setImage( image1 );
         }
     }
+
+    QThread::msleep( 200 );
 }
