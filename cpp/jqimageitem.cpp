@@ -93,7 +93,7 @@ private:
 
         program_->setUniformValue( program_->uniformLocation( "colorTexture" ), 0 );
 
-        imageVAO_ = vertexTextureToVAO( this );
+        imageVAO_ = generateVAOData();
 
         return true;
     }
@@ -175,37 +175,7 @@ private:
         return new QOpenGLFramebufferObject( size, QOpenGLFramebufferObject::NoAttachment );
     }
 
-    QSharedPointer< QOpenGLVertexArrayObject > createVAOFromByteArray(
-        const QByteArray &            data,
-        const std::function< void() > glBindCallback )
-    {
-        auto vbo = new QOpenGLBuffer( QOpenGLBuffer::Type::VertexBuffer );
-
-        QSharedPointer< QOpenGLVertexArrayObject > vao;
-        vao.reset(
-            new QOpenGLVertexArrayObject,
-            [ vbo ](QOpenGLVertexArrayObject *vao)
-            { if ( !qApp ) { return; } vao->destroy(); delete vao; vbo->destroy(); delete vbo; } );
-
-        vao->create();
-        vao->bind();
-
-        vbo->create();
-        vbo->bind();
-
-        vbo->allocate( data.size() );
-        vbo->write( 0, data.constData(), data.size() );
-
-        glBindCallback();
-
-        vbo->release();
-        vao->release();
-
-        return vao;
-    }
-
-    QSharedPointer< QOpenGLVertexArrayObject > vertexTextureToVAO(
-        QOpenGLFunctions *gl )
+    QSharedPointer< QOpenGLVertexArrayObject > generateVAOData()
     {
         struct VertexTextureVBO
         {
@@ -230,16 +200,34 @@ private:
         current->vertexX =  1.0f; current->vertexY = -1.0f; current->vertexZ = 0; current->textureX = 1; current->textureY = 0; ++current;
         current->vertexX = -1.0f; current->vertexY = -1.0f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
 
-        return createVAOFromByteArray(
-            vboBuffer,
-            [ = ]()
-            {
-                gl->glEnableVertexAttribArray( 0 );
-                gl->glEnableVertexAttribArray( 1 );
+        // 创建VBO和VAO
+        auto vbo = new QOpenGLBuffer( QOpenGLBuffer::Type::VertexBuffer );
 
-                gl->glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( VertexTextureVBO ), nullptr );
-                gl->glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof( VertexTextureVBO ), reinterpret_cast< void * >( 12 ) );
-            } );
+        QSharedPointer< QOpenGLVertexArrayObject > vao;
+        vao.reset(
+            new QOpenGLVertexArrayObject,
+            [ vbo ](QOpenGLVertexArrayObject *vao)
+            { if ( !qApp ) { return; } vao->destroy(); delete vao; vbo->destroy(); delete vbo; } );
+
+        vao->create();
+        vao->bind();
+
+        vbo->create();
+        vbo->bind();
+
+        vbo->allocate( vboBuffer.size() );
+        vbo->write( 0, vboBuffer.constData(), vboBuffer.size() );
+
+        this->glEnableVertexAttribArray( 0 );
+        this->glEnableVertexAttribArray( 1 );
+
+        this->glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( VertexTextureVBO ), nullptr );
+        this->glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof( VertexTextureVBO ), reinterpret_cast< void * >( 12 ) );
+
+        vbo->release();
+        vao->release();
+
+        return vao;
     }
 
 private:
