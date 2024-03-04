@@ -29,6 +29,7 @@ Window {
             imageItem.visible  = !imageItem.visible;
             imageItem2.visible = !imageItem.visible;
 
+            // 根据visible属性，激活对应的控件
             if ( imageItem.visible )
             {
                 Helper.setImageItem( imageItem );

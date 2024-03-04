@@ -116,6 +116,7 @@ private:
 
             if ( backgroundTexture_ && ( QSize( backgroundTexture_->width(), backgroundTexture_->height() ) == buffer_.size() ) )
             {
+                // 根据图片类型选择合适的setData
                 if ( buffer_.format() == QImage::Format_RGB32 )
                 {
                     clearColorBeforPaint_ = false;
@@ -216,6 +217,7 @@ private:
 
         auto current = reinterpret_cast< VertexTextureVBO * >( vboBuffer.data() );
 
+        // 因为OpenGL的坐标系是左下角为原点, 所以这里纹理是颠倒映射的
         current->vertexX = -1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
         current->vertexX = -1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 1; ++current;
         current->vertexX =  1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
@@ -264,10 +266,12 @@ void JQImageItem::setImage(const QImage &image)
     {
         if ( ( image.width() < this->width() ) && ( image.height() < this->height() ) )
         {
+            // 输入图片分辨率小于控件分辨率时, 保持图片分辨率，交由OpenGL完成缩放，这样传输性能更优，并且绘制性能也更好
             renderer_->buffer_ = image;
         }
         else
         {
+            // 输入图片分辨率大于控件分辨率时, 为了减少传输开销，在CPU端完成缩放，但是缩放时会占用一定的CPU资源
             renderer_->buffer_ = image.scaled( this->size().toSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
         }
     }

@@ -55,6 +55,7 @@ void Helper::displayLoop()
         imageList.push_back( croppedImage );
     }
 
+    // 图片设置接口是多线程安全的，所以可以在任意线程中调用
     for ( int imageIndex = 0; continueRun_; ++imageIndex )
     {
         QThread::msleep( 16 );
