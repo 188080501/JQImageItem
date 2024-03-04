@@ -145,6 +145,7 @@ private:
             {
                 clearColorBeforPaint_ = buffer_.hasAlphaChannel();
                 imageTexture_.reset( new QOpenGLTexture( buffer_ ) );
+                imageTexture_->setWrapMode( QOpenGLTexture::ClampToEdge );
             }
 
             buffer_ = { };
@@ -222,12 +223,12 @@ private:
         auto current = reinterpret_cast< VertexTextureVBO * >( vboBuffer.data() );
 
         // 因为OpenGL的坐标系是左下角为原点, 所以这里纹理是颠倒映射的
-        current->vertexX = -1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
-        current->vertexX = -1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 1; ++current;
-        current->vertexX =  1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
-        current->vertexX =  1.001f; current->vertexY =  1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
-        current->vertexX =  1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 1; current->textureY = 0; ++current;
-        current->vertexX = -1.001f; current->vertexY = -1.001f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
+        current->vertexX = -1.0f; current->vertexY = -1.0f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
+        current->vertexX = -1.0f; current->vertexY =  1.0f; current->vertexZ = 0; current->textureX = 0; current->textureY = 1; ++current;
+        current->vertexX =  1.0f; current->vertexY =  1.0f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
+        current->vertexX =  1.0f; current->vertexY =  1.0f; current->vertexZ = 0; current->textureX = 1; current->textureY = 1; ++current;
+        current->vertexX =  1.0f; current->vertexY = -1.0f; current->vertexZ = 0; current->textureX = 1; current->textureY = 0; ++current;
+        current->vertexX = -1.0f; current->vertexY = -1.0f; current->vertexZ = 0; current->textureX = 0; current->textureY = 0; ++current;
 
         return createVAOFromByteArray(
             vboBuffer,
