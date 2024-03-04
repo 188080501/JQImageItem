@@ -143,6 +143,7 @@ private:
             }
             else
             {
+                clearColorBeforPaint_ = buffer_.hasAlphaChannel();
                 imageTexture_.reset( new QOpenGLTexture( buffer_ ) );
             }
 
