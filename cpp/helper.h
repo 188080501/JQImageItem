@@ -22,6 +22,8 @@ public slots:
 
     void setImageItem2(JQImageItem2 *imageItem2);
 
+    void stop();
+
 private:
     void displayLoop();
 

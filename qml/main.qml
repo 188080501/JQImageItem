@@ -10,6 +10,10 @@ Window {
     visible: true
     color: "#000000"
 
+    Component.onDestruction: {
+        Helper.stop();
+    }
+
     JQImageItem {
         id: imageItem
         anchors.fill: parent

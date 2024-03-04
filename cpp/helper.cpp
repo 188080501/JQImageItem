@@ -11,8 +11,7 @@ Helper::Helper()
 
 Helper::~Helper()
 {
-    continueRun_ = false;
-    threadPool_.waitForDone();
+    this->stop();
 }
 
 void Helper::setImageItem(JQImageItem *imageItem)
@@ -23,6 +22,12 @@ void Helper::setImageItem(JQImageItem *imageItem)
 void Helper::setImageItem2(JQImageItem2 *imageItem2)
 {
     imageItem2_ = imageItem2;
+}
+
+void Helper::stop()
+{
+    continueRun_ = false;
+    threadPool_.waitForDone();
 }
 
 void Helper::displayLoop()
