@@ -15,7 +15,7 @@
 
 static QMutex mutex_;
 
-#if ( defined Q_CC_MSVC ) || ( ( defined Q_OS_MAC ) && !( defined Q_OS_IOS ) ) || ( ( defined Q_OS_LINUX ) && !( defined Q_OS_ANDROID ) )
+#if ( defined Q_CC_MSVC ) || ( defined Q_CC_MINGW ) || ( ( defined Q_OS_MAC ) && !( defined Q_OS_IOS ) ) || ( ( defined Q_OS_LINUX ) && !( defined Q_OS_ANDROID ) )
 #   define IS_DESKTOP
 #endif
 
