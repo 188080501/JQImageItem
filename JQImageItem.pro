@@ -1,4 +1,4 @@
-QT *= core gui qml quick opengl concurrent
+QT *= core gui qml quick opengl
 
 TARGET = JQImageItem
 

@@ -1,12 +1,12 @@
 ﻿#include "helper.h"
 
 // Qt lib import
-#include <QtConcurrent>
+#include <QDebug>
+#include <QtMath>
 
 Helper::Helper()
 {
-    threadPool_.setMaxThreadCount( 1 );
-    QtConcurrent::run( &threadPool_, std::bind( &Helper::displayLoop, this ) );
+    this->start();
 }
 
 Helper::~Helper()
@@ -27,10 +27,10 @@ void Helper::setImageItem2(JQImageItem2 *imageItem2)
 void Helper::stop()
 {
     continueRun_ = false;
-    threadPool_.waitForDone();
+    this->wait();
 }
 
-void Helper::displayLoop()
+void Helper::run()
 {
     const auto        rawImage = QImage( ":/images/3.png" );
     QVector< QImage > imageList;

@@ -8,7 +8,7 @@
 // JQLibrary lib import
 #include <JQImageItem>
 
-class Helper: public QObject
+class Helper: public QThread
 {
     Q_OBJECT
 
@@ -25,11 +25,10 @@ public slots:
     void stop();
 
 private:
-    void displayLoop();
+    void run() override;
 
 private:
-    QThreadPool threadPool_;
-    bool        continueRun_ = true;
+    bool continueRun_ = true;
 
     JQImageItem * imageItem_ = nullptr;
     JQImageItem2 *imageItem2_ = nullptr;
