@@ -35,7 +35,7 @@ void Helper::run()
     const auto        rawImage = QImage( ":/images/3.png" );
     QVector< QImage > imageList;
 
-    // 根据原始输入图片进行旋转，生成测试数据
+    // 根据原始输入图片进行缩放，生成测试数据
     const int frames = 300; // 总帧数
 
     for ( int i = 0; i < frames; ++i )
@@ -60,7 +60,7 @@ void Helper::run()
         imageList.push_back( croppedImage );
     }
 
-    // 图片设置接口是多线程安全的，所以可以在任意线程中调用
+    // 图片设置接口是多线程安全的，可以在任意线程中调用
     for ( int imageIndex = 0; continueRun_; ++imageIndex )
     {
         QThread::msleep( 16 );
