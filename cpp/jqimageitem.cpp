@@ -149,7 +149,8 @@ private:
             }
             else
             {
-                includesTransparentData_ = buffer_.hasAlphaChannel();
+                includesTransparentData_   = buffer_.hasAlphaChannel();
+                includesPremultipliedData_ = false;
                 imageTexture_.reset( new QOpenGLTexture( buffer_ ) );
                 imageTexture_->setWrapMode( QOpenGLTexture::ClampToEdge );
             }
