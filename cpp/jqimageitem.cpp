@@ -116,33 +116,40 @@ private:
             if ( imageTexture_ && ( QSize( imageTexture_->width(), imageTexture_->height() ) == buffer_.size() ) )
             {
                 // 根据图片类型选择合适的setData
-                if ( buffer_.format() == QImage::Format_RGB32 )
+                if ( buffer_.format() == QImage::Format_RGB888 )
                 {
-                    clearColorBeforPaint_ = false;
+                    includesTransparentData_   = false;
+                    includesPremultipliedData_ = false;
+                    imageTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer_.constBits() );
+                }
+                else if ( buffer_.format() == QImage::Format_RGB32 )
+                {
+                    includesTransparentData_   = false;
+                    includesPremultipliedData_ = false;
                     imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_ARGB32 )
                 {
-                    clearColorBeforPaint_ = true;
+                    includesTransparentData_   = true;
+                    includesPremultipliedData_ = false;
                     imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
-                else if ( buffer_.format() == QImage::Format_RGB888 )
+                else if ( buffer_.format() == QImage::Format_ARGB32_Premultiplied )
                 {
-                    clearColorBeforPaint_ = false;
-                    imageTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer_.constBits() );
+                    includesTransparentData_   = true;
+                    includesPremultipliedData_ = true;
+                    imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else
                 {
-                    imageTexture_.clear();
+                    qDebug() << "JQImageItemRenderer::render: unsupported image format:" << buffer_;
                     buffer_ = { };
-
-                    qDebug() << "JQImageItemRenderer::render: unsupported image format:" << buffer_.format();
                     return;
                 }
             }
             else
             {
-                clearColorBeforPaint_ = buffer_.hasAlphaChannel();
+                includesTransparentData_ = buffer_.hasAlphaChannel();
                 imageTexture_.reset( new QOpenGLTexture( buffer_ ) );
                 imageTexture_->setWrapMode( QOpenGLTexture::ClampToEdge );
             }
@@ -152,17 +159,32 @@ private:
 
         if ( !program_ || !imageTexture_ ) { return; }
 
-        // 带透明数据时先清空老的数据
-        if ( clearColorBeforPaint_ )
-        {
-            this->glClear( GL_COLOR_BUFFER_BIT );
-        }
-
         program_->bind();
         imageVAO_->bind();
         imageTexture_->bind();
 
+        // 带透明数据时先清空老的数据，并且开启混合
+        if ( includesTransparentData_ )
+        {
+            this->glClear( GL_COLOR_BUFFER_BIT );
+            this->glEnable( GL_BLEND );
+
+            if ( includesPremultipliedData_ )
+            {
+                this->glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+            }
+            else
+            {
+                this->glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+            }
+        }
+
         this->glDrawArrays( GL_TRIANGLES, 0, 6 );
+
+        if ( includesTransparentData_ )
+        {
+            this->glDisable( GL_BLEND );
+        }
 
         imageTexture_->release();
         imageVAO_->release();
@@ -234,7 +256,8 @@ private:
     QMutex mutex_;
     QImage buffer_;
 
-    bool clearColorBeforPaint_ = true;
+    bool includesTransparentData_   = false;
+    bool includesPremultipliedData_ = false;
 
     QSharedPointer< QOpenGLShaderProgram >     program_;
     QSharedPointer< QOpenGLTexture >           imageTexture_;
@@ -273,11 +296,6 @@ void JQImageItem::setImage(const QImage &image)
     else
     {
         renderer_->buffer_ = image;
-    }
-
-    if ( renderer_->buffer_.format() == QImage::Format_ARGB32_Premultiplied )
-    {
-        renderer_->buffer_ = renderer_->buffer_.convertToFormat( QImage::Format_ARGB32 );
     }
 
     QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
