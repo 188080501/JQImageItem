@@ -170,6 +170,7 @@ private:
             this->glClear( GL_COLOR_BUFFER_BIT );
             this->glEnable( GL_BLEND );
 
+            // OpenGL默认情况下无法处理Premultiplied，因此修改混合公式，来兼容这个数据格式
             if ( includesPremultipliedData_ )
             {
                 this->glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
