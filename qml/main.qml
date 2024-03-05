@@ -8,7 +8,7 @@ Window {
     width: 720
     height: 720
     visible: true
-    color: "#000000"
+    color: "#eef3fa"
 
     Component.onDestruction: {
         Helper.stop();

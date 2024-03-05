@@ -32,7 +32,7 @@ void Helper::stop()
 
 void Helper::run()
 {
-    const auto        rawImage = QImage( ":/images/3.png" );
+    const auto        rawImage = QImage( ":/images/1.png" );
     QVector< QImage > imageList;
 
     // 根据原始输入图片进行缩放，生成测试数据

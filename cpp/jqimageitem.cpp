@@ -20,7 +20,7 @@
 static const char vertexShader[] =
     "attribute vec4 rawVertex;"
     "attribute vec2 rawTexture;"
-    "varying vec2 currentTexture;"
+    "varying   vec2 currentTexture;"
     "void main()"
     "{"
     "    currentTexture = rawTexture;"
@@ -28,12 +28,19 @@ static const char vertexShader[] =
     "}";
 
 static const char fragmentShader[] =
-    "varying vec2 currentTexture;"
+    "varying vec2      currentTexture;"
     "uniform sampler2D colorTexture;"
+    "uniform bool      enabledPremultiply;"
     "void main()"
     "{"
     "    vec4 textureColor = texture2D( colorTexture, currentTexture );"
     "    if ( textureColor.w < 0.001 ) { discard; }"
+    "    if ( enabledPremultiply )"
+    "    {"
+    "        textureColor.x *= textureColor.w;"
+    "        textureColor.y *= textureColor.w;"
+    "        textureColor.z *= textureColor.w;"
+    "    }"
     "    gl_FragColor = textureColor;"
     "}";
 
@@ -88,6 +95,8 @@ private:
             qDebug() << "JQImageItemRenderer: add fragment shader error";
             return false;
         }
+
+        enabledPremultiplyLocation_ = program->uniformLocation( "enabledPremultiply" );
 
         program_.reset( program );
         program_->setUniformValue( program_->uniformLocation( "colorTexture" ), 0 );
@@ -169,16 +178,20 @@ private:
         {
             this->glClear( GL_COLOR_BUFFER_BIT );
             this->glEnable( GL_BLEND );
+            this->glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
 
-            // OpenGL默认情况下无法处理Premultiplied，因此修改混合公式，来兼容这个数据格式
             if ( includesPremultipliedData_ )
             {
-                this->glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+                program_->setUniformValue( enabledPremultiplyLocation_, false );
             }
             else
             {
-                this->glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+                program_->setUniformValue( enabledPremultiplyLocation_, true );
             }
+        }
+        else
+        {
+            program_->setUniformValue( enabledPremultiplyLocation_, false );
         }
 
         this->glDrawArrays( GL_TRIANGLES, 0, 6 );
@@ -259,8 +272,9 @@ private:
     QMutex mutex_;
     QImage buffer_;
 
-    bool includesTransparentData_   = false;
-    bool includesPremultipliedData_ = false;
+    bool includesTransparentData_    = false;
+    bool includesPremultipliedData_  = false;
+    int  enabledPremultiplyLocation_ = -1;
 
     QSharedPointer< QOpenGLShaderProgram >     program_;
     QSharedPointer< QOpenGLTexture >           imageTexture_;
