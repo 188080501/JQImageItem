@@ -17,6 +17,7 @@ class JQImageItemRenderer;
 class JQImageItem: public QQuickFramebufferObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY( JQImageItem )
 
 public:
     JQImageItem();
