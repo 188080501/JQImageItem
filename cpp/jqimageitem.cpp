@@ -125,7 +125,13 @@ private:
             if ( imageTexture_ && ( QSize( imageTexture_->width(), imageTexture_->height() ) == buffer_.size() ) )
             {
                 // 根据图片类型选择合适的setData
-                if ( buffer_.format() == QImage::Format_RGB888 )
+                if ( buffer_.format() == QImage::Format_Grayscale8 )
+                {
+                    includesTransparentData_   = false;
+                    includesPremultipliedData_ = false;
+                    imageTexture_->setData( 0, QOpenGLTexture::Luminance, QOpenGLTexture::UInt8, buffer_.constBits() );
+                }
+                else if ( buffer_.format() == QImage::Format_RGB888 )
                 {
                     includesTransparentData_   = false;
                     includesPremultipliedData_ = false;
@@ -295,6 +301,16 @@ JQImageItem::~JQImageItem()
 
 void JQImageItem::setImage(const QImage &image)
 {
+    if ( ( image.format() != QImage::Format_Grayscale8 ) &&
+         ( image.format() != QImage::Format_RGB888 ) &&
+         ( image.format() != QImage::Format_RGB32 ) &&
+         ( image.format() != QImage::Format_ARGB32 ) &&
+         ( image.format() != QImage::Format_ARGB32_Premultiplied ) )
+    {
+        qDebug() << "JQImageItem::setImage: unsupported image format: " << image.format();
+        return;
+    }
+
     QMutexLocker locker( &renderer_->mutex_ );
 
     if ( !image.isNull() )
