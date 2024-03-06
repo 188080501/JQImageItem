@@ -183,6 +183,7 @@ private:
 
                 imageTexture_.reset( new QOpenGLTexture( buffer_ ) );
                 imageTexture_->setWrapMode( QOpenGLTexture::ClampToEdge );
+                imageTexture_->setAutoMipMapGenerationEnabled( false );
                 imageTexture_->setMinificationFilter( QOpenGLTexture::Linear );
                 imageTexture_->setMagnificationFilter( QOpenGLTexture::Linear );
             }
