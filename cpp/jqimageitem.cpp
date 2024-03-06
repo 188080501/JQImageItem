@@ -184,8 +184,7 @@ private:
         // 带透明数据时先清空老的数据，并且开启混合
         if ( includesTransparentData_ )
         {
-            glGetFloatv( GL_COLOR_CLEAR_VALUE, clearColor );
-
+            this->glGetFloatv( GL_COLOR_CLEAR_VALUE, clearColor );
             this->glClearColor( 0.0, 0.0, 0.0, 0.0 );
             this->glClear( GL_COLOR_BUFFER_BIT );
             this->glEnable( GL_BLEND );
