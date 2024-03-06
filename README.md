@@ -89,7 +89,7 @@ imageItem->setImage( QImage( "C:/your/image/xxx.png" ) );
 
 测试代码分为2部分，一个是QML部分，分别实例化了JQImageItem和JQImageItem2，鼠标点击切换，开发者们可以观察切换后，CPU和GPU占用情况的变化。
 
-C++的Helper类，会起一个线程，以大约60FPS的速度在设置图片给JQImageItem，以模拟图片变化的场合。
+C++的Helper类，以大约60FPS的速度在设置图片给JQImageItem，以模拟图片变化的场合。
 
 测试数据会有一个缩放的效果，这个涉及到的图片序列已经在初始化的时候生成完毕，并且统一了分辨率。这样在测试代码运行过程中的开销，基本就只有渲染开销。
 

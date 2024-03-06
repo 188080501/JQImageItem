@@ -6,42 +6,7 @@
 
 Helper::Helper()
 {
-    this->start();
-}
-
-Helper::~Helper()
-{
-    this->stop();
-}
-
-void Helper::setImageItem(JQImageItem *imageItem)
-{
-    if ( imageItem )
-    {
-        imageItem->setImage( { } );
-    }
-    imageItem_ = imageItem;
-}
-
-void Helper::setImageItem2(JQImageItem2 *imageItem2)
-{
-    if ( imageItem2 )
-    {
-        imageItem2->setImage( { } );
-    }
-    imageItem2_ = imageItem2;
-}
-
-void Helper::stop()
-{
-    continueRun_ = false;
-    this->wait();
-}
-
-void Helper::run()
-{
-    const auto        rawImage = QImage( ":/images/1.png" );
-    QVector< QImage > imageList;
+    const auto rawImage = QImage( ":/images/1.png" );
 
     // 根据原始输入图片进行缩放，生成测试数据
     const int frames = 300; // 总帧数
@@ -65,24 +30,42 @@ void Helper::run()
 
         // 裁剪放大的图片以保持原始尺寸
         const auto croppedImage = scaledImage.copy( cropRect );
-        imageList.push_back( croppedImage );
+        imageList_.push_back( croppedImage );
     }
 
-    // 图片设置接口是多线程安全的，可以在任意线程中调用
-    for ( int imageIndex = 0; continueRun_; ++imageIndex )
+    connect( &timer_, &QTimer::timeout, this, &Helper::setNextImage );
+    timer_.start( 1000 / 60 );
+}
+
+void Helper::setImageItem(JQImageItem *imageItem)
+{
+    if ( imageItem )
     {
-        QThread::msleep( 16 );
+        imageItem->setImage( { } );
+    }
+    imageItem_ = imageItem;
+}
 
-        if ( imageItem_ )
-        {
-            imageItem_->setImage( imageList[ imageIndex % imageList.size() ] );
-        }
+void Helper::setImageItem2(JQImageItem2 *imageItem2)
+{
+    if ( imageItem2 )
+    {
+        imageItem2->setImage( { } );
+    }
+    imageItem2_ = imageItem2;
+}
 
-        if ( imageItem2_ )
-        {
-            imageItem2_->setImage( imageList[ imageIndex % imageList.size() ] );
-        }
+void Helper::setNextImage()
+{
+    ++imageIndex_;
+
+    if ( imageItem_ )
+    {
+        imageItem_->setImage( imageList_[ imageIndex_ % imageList_.size() ] );
     }
 
-    QThread::msleep( 200 );
+    if ( imageItem2_ )
+    {
+        imageItem2_->setImage( imageList_[ imageIndex_ % imageList_.size() ] );
+    }
 }

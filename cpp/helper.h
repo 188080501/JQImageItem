@@ -3,34 +3,35 @@
 
 // Qt lib import
 #include <QDebug>
-#include <QThreadPool>
+#include <QTimer>
 
 // JQLibrary lib import
 #include <JQImageItem>
 
-class Helper: public QThread
+class Helper: public QObject
 {
     Q_OBJECT
 
 public:
     Helper();
 
-    virtual ~Helper() override;
+    virtual ~Helper() override = default;
 
 public slots:
     void setImageItem(JQImageItem *imageItem);
 
     void setImageItem2(JQImageItem2 *imageItem2);
 
-    void stop();
+private:
+    void setNextImage();
 
 private:
-    void run() override;
+    QTimer timer_;
 
-private:
-    bool continueRun_ = true;
+    QVector< QImage > imageList_;
+    int               imageIndex_ = 0;
 
-    JQImageItem * imageItem_ = nullptr;
+    JQImageItem * imageItem_  = nullptr;
     JQImageItem2 *imageItem2_ = nullptr;
 };
 
