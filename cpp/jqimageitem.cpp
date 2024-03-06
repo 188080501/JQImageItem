@@ -59,7 +59,7 @@ private:
     {
         this->initializeOpenGLFunctions();
 
-        auto program = new QOpenGLShaderProgram;
+        QSharedPointer< QOpenGLShaderProgram > program( new QOpenGLShaderProgram );
 
         auto vertexData = getGlslData( vertexShader );
         if ( vertexData.isEmpty() )
@@ -98,7 +98,7 @@ private:
 
         enabledPremultiplyLocation_ = program->uniformLocation( "enabledPremultiply" );
 
-        program_.reset( program );
+        program_ = program;
         program_->setUniformValue( program_->uniformLocation( "colorTexture" ), 0 );
 
         imageVAO_ = generateVAOData();
