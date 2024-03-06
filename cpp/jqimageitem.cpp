@@ -179,9 +179,14 @@ private:
         imageVAO_->bind();
         imageTexture_->bind();
 
+        GLfloat clearColor[ 4 ];
+
         // 带透明数据时先清空老的数据，并且开启混合
         if ( includesTransparentData_ )
         {
+            glGetFloatv( GL_COLOR_CLEAR_VALUE, clearColor );
+
+            this->glClearColor( 0.0, 0.0, 0.0, 0.0 );
             this->glClear( GL_COLOR_BUFFER_BIT );
             this->glEnable( GL_BLEND );
             this->glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
@@ -205,6 +210,7 @@ private:
         if ( includesTransparentData_ )
         {
             this->glDisable( GL_BLEND );
+            this->glClearColor( clearColor[ 0 ], clearColor[ 1 ], clearColor[ 2 ], clearColor[ 3 ] );
             this->glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
         }
 
