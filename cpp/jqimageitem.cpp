@@ -31,6 +31,7 @@ static const char fragmentShader[] =
     "varying vec2      currentTexture;"
     "uniform sampler2D colorTexture;"
     "uniform bool      enabledPremultiply;"
+    "uniform bool      enabledSwapRedBlue;"
     "void main()"
     "{"
     "    vec4 textureColor = texture2D( colorTexture, currentTexture );"
@@ -40,6 +41,12 @@ static const char fragmentShader[] =
     "        textureColor.x *= textureColor.w;"
     "        textureColor.y *= textureColor.w;"
     "        textureColor.z *= textureColor.w;"
+    "    }"
+    "    if ( enabledSwapRedBlue )"
+    "    {"
+    "        float buf      = textureColor.x;"
+    "        textureColor.x = textureColor.z;"
+    "        textureColor.z = buf;"
     "    }"
     "    gl_FragColor = textureColor;"
     "}";
@@ -97,6 +104,7 @@ private:
         }
 
         enabledPremultiplyLocation_ = program->uniformLocation( "enabledPremultiply" );
+        enabledSwapRedBlueLocation_ = program->uniformLocation( "enabledSwapRedBlue" );
 
         program_ = program;
         program_->setUniformValue( program_->uniformLocation( "colorTexture" ), 0 );
@@ -129,31 +137,36 @@ private:
                 {
                     includesTransparentData_   = false;
                     includesPremultipliedData_ = false;
+                    includesBGRData_           = false;
                     imageTexture_->setData( 0, QOpenGLTexture::Luminance, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_RGB888 )
                 {
                     includesTransparentData_   = false;
                     includesPremultipliedData_ = false;
+                    includesBGRData_           = false;
                     imageTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_RGB32 )
                 {
                     includesTransparentData_   = false;
                     includesPremultipliedData_ = false;
-                    imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
+                    includesBGRData_           = true;
+                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_ARGB32 )
                 {
                     includesTransparentData_   = true;
                     includesPremultipliedData_ = false;
-                    imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
+                    includesBGRData_           = true;
+                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else if ( buffer_.format() == QImage::Format_ARGB32_Premultiplied )
                 {
                     includesTransparentData_   = true;
                     includesPremultipliedData_ = true;
-                    imageTexture_->setData( 0, QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, buffer_.constBits() );
+                    includesBGRData_           = true;
+                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer_.constBits() );
                 }
                 else
                 {
@@ -166,8 +179,12 @@ private:
             {
                 includesTransparentData_   = buffer_.hasAlphaChannel();
                 includesPremultipliedData_ = false;
+                includesBGRData_           = false;
+
                 imageTexture_.reset( new QOpenGLTexture( buffer_ ) );
                 imageTexture_->setWrapMode( QOpenGLTexture::ClampToEdge );
+                imageTexture_->setMinificationFilter( QOpenGLTexture::Linear );
+                imageTexture_->setMagnificationFilter( QOpenGLTexture::Linear );
             }
 
             buffer_ = { };
@@ -190,19 +207,14 @@ private:
             this->glEnable( GL_BLEND );
             this->glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
 
-            if ( includesPremultipliedData_ )
-            {
-                program_->setUniformValue( enabledPremultiplyLocation_, false );
-            }
-            else
-            {
-                program_->setUniformValue( enabledPremultiplyLocation_, true );
-            }
+            program_->setUniformValue( enabledPremultiplyLocation_, !includesPremultipliedData_ );
         }
         else
         {
             program_->setUniformValue( enabledPremultiplyLocation_, false );
         }
+
+        program_->setUniformValue( enabledSwapRedBlueLocation_, includesBGRData_ );
 
         this->glDrawArrays( GL_TRIANGLES, 0, 6 );
 
@@ -285,7 +297,10 @@ private:
 
     bool includesTransparentData_    = false;
     bool includesPremultipliedData_  = false;
-    int  enabledPremultiplyLocation_ = -1;
+    bool includesBGRData_            = false;
+
+    int enabledPremultiplyLocation_ = -1;
+    int enabledSwapRedBlueLocation_ = -1;
 
     QSharedPointer< QOpenGLShaderProgram >     program_;
     QSharedPointer< QOpenGLTexture >           imageTexture_;
