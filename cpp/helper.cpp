@@ -16,11 +16,19 @@ Helper::~Helper()
 
 void Helper::setImageItem(JQImageItem *imageItem)
 {
+    if ( imageItem )
+    {
+        imageItem->setImage( { } );
+    }
     imageItem_ = imageItem;
 }
 
 void Helper::setImageItem2(JQImageItem2 *imageItem2)
 {
+    if ( imageItem2 )
+    {
+        imageItem2->setImage( { } );
+    }
     imageItem2_ = imageItem2;
 }
 
