@@ -307,7 +307,8 @@ JQImageItem::~JQImageItem()
 
 void JQImageItem::setImage(const QImage &image)
 {
-    if ( ( image.format() != QImage::Format_Grayscale8 ) &&
+    if ( !image.isNull() &&
+         ( image.format() != QImage::Format_Grayscale8 ) &&
          ( image.format() != QImage::Format_RGB888 ) &&
          ( image.format() != QImage::Format_RGB32 ) &&
          ( image.format() != QImage::Format_ARGB32 ) &&
