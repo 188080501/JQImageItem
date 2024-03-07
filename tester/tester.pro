@@ -1,5 +1,9 @@
 QT *= core gui qml quick opengl
 
+!wasm {
+    QT *= concurrent
+}
+
 TARGET = JQImageItemTester
 
 INCLUDEPATH *= \

@@ -18,6 +18,8 @@ public:
     virtual ~Helper() override = default;
 
 public slots:
+    void stop();
+
     void setImageItem(JQImageItem *imageItem);
 
     void setImageItem2(JQImageItem2 *imageItem2);
@@ -27,6 +29,7 @@ private:
 
 private:
     QTimer timer_;
+    bool   isContinue_ = true;
 
     QVector< QImage > imageList_;
     int               imageIndex_ = 0;

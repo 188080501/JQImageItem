@@ -3,6 +3,9 @@
 // Qt lib import
 #include <QDebug>
 #include <QtMath>
+#ifndef Q_OS_WASM
+#   include <QtConcurrent>
+#endif
 
 Helper::Helper()
 {
@@ -30,11 +33,33 @@ Helper::Helper()
 
         // 裁剪放大的图片以保持原始尺寸
         const auto croppedImage = scaledImage.copy( cropRect );
-        imageList_.push_back( croppedImage );
+        imageList_.push_back( croppedImage.convertToFormat( QImage::Format_ARGB32 ) );
     }
 
+#ifndef Q_OS_WASM
+    QtConcurrent::run(
+        [ = ]()
+        {
+            while ( isContinue_ )
+            {
+                QThread::msleep( 16 );
+                this->setNextImage();
+            }
+        } );
+#else
     connect( &timer_, &QTimer::timeout, this, &Helper::setNextImage );
-    timer_.start( 1000 / 60 );
+    timer_.start( 16 );
+#endif
+}
+
+void Helper::stop()
+{
+#ifndef Q_OS_WASM
+    isContinue_ = false;
+    QThreadPool::globalInstance()->waitForDone();
+#else
+    timer_.stop();
+#endif
 }
 
 void Helper::setImageItem(JQImageItem *imageItem)
