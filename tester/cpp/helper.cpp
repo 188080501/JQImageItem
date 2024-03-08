@@ -37,7 +37,7 @@ Helper::Helper()
     }
 
 #ifndef Q_OS_WASM
-    QtConcurrent::run(
+    auto future = QtConcurrent::run(
         [ = ]()
         {
             while ( isContinue_ )
@@ -46,6 +46,7 @@ Helper::Helper()
                 this->setNextImage();
             }
         } );
+    Q_UNUSED( future );
 #else
     connect( &timer_, &QTimer::timeout, this, &Helper::setNextImage );
     timer_.start( 16 );
