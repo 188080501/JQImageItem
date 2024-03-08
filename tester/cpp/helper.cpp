@@ -33,7 +33,7 @@ Helper::Helper()
 
         // 裁剪放大的图片以保持原始尺寸
         const auto croppedImage = scaledImage.copy( cropRect );
-        imageList_.push_back( croppedImage.convertToFormat( QImage::Format_ARGB32 ) );
+        imageList_.push_back( croppedImage );
     }
 
 #ifndef Q_OS_WASM
