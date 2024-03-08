@@ -150,6 +150,13 @@ private:
                     includesBGRData_           = false;
                     imageTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer.constBits() );
                 }
+                else if ( buffer.format() == QImage::Format_RGBA8888 )
+                {
+                    includesTransparentData_   = true;
+                    includesPremultipliedData_ = false;
+                    includesBGRData_           = false;
+                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
+                }
                 else if ( buffer.format() == QImage::Format_RGB32 )
                 {
                     includesTransparentData_   = false;
@@ -325,6 +332,7 @@ void JQImageItem::setImage(const QImage &image)
     if ( !image.isNull() &&
          ( image.format() != QImage::Format_Grayscale8 ) &&
          ( image.format() != QImage::Format_RGB888 ) &&
+         ( image.format() != QImage::Format_RGBA8888 ) &&
          ( image.format() != QImage::Format_RGB32 ) &&
          ( image.format() != QImage::Format_ARGB32 ) &&
          ( image.format() != QImage::Format_ARGB32_Premultiplied ) )
