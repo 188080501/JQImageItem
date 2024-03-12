@@ -2,7 +2,7 @@
 
 本仓库实现了一个在QML框架中，显示QImage数据的QML控件，取名为JQImageItem
 
-本控件针对的场合是需要显示并且频繁修改QImage的场景，例如视频显示。
+本控件针对的场合是需要显示并且频繁修改QImage的场景，例如视频显示。并且控件支持透明度。
 
 提供了2个实现版本，一个是基于QQuickFramebufferObject（FBO）的JQImageItem，一个是基于QQuickPaintedItem的JQImageItem2。
 
