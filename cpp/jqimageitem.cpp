@@ -17,39 +17,41 @@
 #   define IS_DESKTOP
 #endif
 
-static const char vertexShader[] =
-    "attribute vec4 rawVertex;"
-    "attribute vec2 rawTexture;"
-    "varying   vec2 currentTexture;"
-    "void main()"
-    "{"
-    "    currentTexture = rawTexture;"
-    "    gl_Position    = rawVertex;"
-    "}";
+static const char vertexShader[] = R"(
+    attribute vec4 rawVertex;
+    attribute vec2 rawTexture;
+    varying   vec2 currentTexture;
+    void main()
+    {
+        currentTexture = rawTexture;
+        gl_Position    = rawVertex;
+    }
+)";
 
-static const char fragmentShader[] =
-    "varying vec2      currentTexture;"
-    "uniform sampler2D colorTexture;"
-    "uniform bool      enabledPremultiply;"
-    "uniform bool      enabledSwapRedBlue;"
-    "void main()"
-    "{"
-    "    vec4 textureColor = texture2D( colorTexture, currentTexture );"
-    "    if ( textureColor.w < 0.001 ) { discard; }"
-    "    if ( enabledPremultiply )"
-    "    {"
-    "        textureColor.x *= textureColor.w;"
-    "        textureColor.y *= textureColor.w;"
-    "        textureColor.z *= textureColor.w;"
-    "    }"
-    "    if ( enabledSwapRedBlue )"
-    "    {"
-    "        float buf      = textureColor.x;"
-    "        textureColor.x = textureColor.z;"
-    "        textureColor.z = buf;"
-    "    }"
-    "    gl_FragColor = textureColor;"
-    "}";
+static const char fragmentShader[] = R"(
+    varying vec2      currentTexture;
+    uniform sampler2D colorTexture;
+    uniform bool      enabledPremultiply;
+    uniform bool      enabledSwapRedBlue;
+    void main()
+    {
+        vec4 textureColor = texture2D( colorTexture, currentTexture );
+        if ( textureColor.w < 0.001 ) { discard; }
+        if ( enabledPremultiply )
+        {
+            textureColor.x *= textureColor.w;
+            textureColor.y *= textureColor.w;
+            textureColor.z *= textureColor.w;
+        }
+        if ( enabledSwapRedBlue )
+        {
+            float buf      = textureColor.x;
+            textureColor.x = textureColor.z;
+            textureColor.z = buf;
+        }
+        gl_FragColor = textureColor;
+    }
+)";
 
 // JQImageItemRenderer
 class JQImageItemRenderer: public QQuickFramebufferObject::Renderer, protected QOpenGLFunctions
