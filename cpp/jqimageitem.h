@@ -20,7 +20,7 @@ class JQImageItem: public QQuickFramebufferObject
     Q_DISABLE_COPY( JQImageItem )
 
 public:
-    JQImageItem();
+    JQImageItem() = default;
 
     ~JQImageItem() override;
 

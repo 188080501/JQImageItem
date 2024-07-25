@@ -318,15 +318,13 @@ private:
 };
 
 // JQImageItem
-JQImageItem::JQImageItem()
-{
-    renderer_ = new JQImageItemRenderer;
-}
-
 JQImageItem::~JQImageItem()
 {
-    renderer_->mutex_.lock();
-    renderer_->mutex_.unlock();
+    if ( renderer_ )
+    {
+        renderer_->mutex_.lock();
+        renderer_->mutex_.unlock();
+    }
 }
 
 void JQImageItem::setImage(const QImage &image)
@@ -342,6 +340,8 @@ void JQImageItem::setImage(const QImage &image)
         qDebug() << "JQImageItem::setImage: unsupported image format: " << image.format();
         return;
     }
+
+    if ( !renderer_ ) { return; }
 
     if ( !image.isNull() )
     {
@@ -372,6 +372,7 @@ void JQImageItem::setImage(const QImage &image)
 
 QQuickFramebufferObject::Renderer *JQImageItem::createRenderer() const
 {
+    renderer_ = new JQImageItemRenderer;
     renderer_->init();
 
     return renderer_;
