@@ -59,9 +59,12 @@ class JQImageItemRenderer: public QQuickFramebufferObject::Renderer, protected Q
     friend JQImageItem;
 
 public:
-    JQImageItemRenderer() = default;
+    JQImageItemRenderer(const std::function< void() > &onDeleteCallback):
+        onDeleteCallback_( onDeleteCallback )
+    { }
 
-    ~JQImageItemRenderer() = default;
+    ~JQImageItemRenderer()
+    { onDeleteCallback_(); }
 
 private:
     bool init()
@@ -302,6 +305,8 @@ private:
     }
 
 private:
+    std::function< void() > onDeleteCallback_;
+
     QMutex mutex_;
     QImage buffer_;
 
@@ -372,7 +377,7 @@ void JQImageItem::setImage(const QImage &image)
 
 QQuickFramebufferObject::Renderer *JQImageItem::createRenderer() const
 {
-    renderer_ = new JQImageItemRenderer;
+    renderer_ = new JQImageItemRenderer( [ & ](){ renderer_ = nullptr; } );
     renderer_->init();
 
     return renderer_;
