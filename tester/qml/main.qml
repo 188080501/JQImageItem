@@ -14,46 +14,23 @@ Window {
         Helper.stop();
     }
 
+    // 基于QQuickFramebufferObject
     JQImageItem {
-        id: imageItem
         anchors.fill: parent
-        visible: false
-    }
-
-    JQImageItem2 {
-        id: imageItem2
-        anchors.fill: parent
-        visible: false
-    }
-
-    MouseArea {
-        anchors.fill: parent
-
-        function update() {
-            imageItem.visible  = !imageItem.visible;
-            imageItem2.visible = !imageItem.visible;
-
-            // 根据visible属性，激活对应的控件
-            if ( imageItem.visible )
-            {
-                Helper.setImageItem( imageItem );
-                Helper.setImageItem2( null );
-            }
-            else
-            {
-                Helper.setImageItem( null );
-                Helper.setImageItem2( imageItem2 );
-            }
-        }
-
-        onClicked: {
-            update();
-        }
 
         Component.onCompleted: {
-            update();
+            Helper.setImageItem( this );
         }
     }
+
+    // 基于QQuickPaintedItem
+    // JQImageItem2 {
+    //     anchors.fill: parent
+
+    //     Component.onCompleted: {
+    //         Helper.setImageItem2( this );
+    //     }
+    // }
 
     Text {
         x: 15
@@ -66,15 +43,6 @@ Window {
             result += window.width.toString();
             result += " x ";
             result += window.height.toString();
-
-            if ( imageItem.visible )
-            {
-                result += "\nJQImageItem";
-            }
-            else if ( imageItem2.visible )
-            {
-                result += "\nJQImageItem2";
-            }
 
             return result;
         }
