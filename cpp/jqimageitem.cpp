@@ -138,68 +138,81 @@ private:
             buffer_ = { };
             mutex_.unlock();
 
-            if ( imageTexture_ && ( QSize( imageTexture_->width(), imageTexture_->height() ) == buffer.size() ) )
+            if ( !imageTexture_ || ( QSize( imageTexture_->width(), imageTexture_->height() ) != buffer.size() ) )
             {
-                // 根据图片类型选择合适的setData
+                imageTexture_.reset( new QOpenGLTexture( QOpenGLTexture::Target2D ) );
+
                 if ( buffer.format() == QImage::Format_Grayscale8 )
                 {
-                    includesTransparentData_   = false;
-                    includesPremultipliedData_ = false;
-                    includesBGRData_           = false;
-                    imageTexture_->setData( 0, QOpenGLTexture::Luminance, QOpenGLTexture::UInt8, buffer.constBits() );
+                    imageTexture_->setFormat( QOpenGLTexture::LuminanceFormat );
                 }
                 else if ( buffer.format() == QImage::Format_RGB888 )
                 {
-                    includesTransparentData_   = false;
-                    includesPremultipliedData_ = false;
-                    includesBGRData_           = false;
-                    imageTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer.constBits() );
-                }
-                else if ( buffer.format() == QImage::Format_RGBA8888 )
-                {
-                    includesTransparentData_   = true;
-                    includesPremultipliedData_ = false;
-                    includesBGRData_           = false;
-                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
-                }
-                else if ( buffer.format() == QImage::Format_RGB32 )
-                {
-                    includesTransparentData_   = false;
-                    includesPremultipliedData_ = false;
-                    includesBGRData_           = true;
-                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
-                }
-                else if ( buffer.format() == QImage::Format_ARGB32 )
-                {
-                    includesTransparentData_   = true;
-                    includesPremultipliedData_ = false;
-                    includesBGRData_           = true;
-                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
-                }
-                else if ( buffer.format() == QImage::Format_ARGB32_Premultiplied )
-                {
-                    includesTransparentData_   = true;
-                    includesPremultipliedData_ = true;
-                    includesBGRData_           = true;
-                    imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
+                    imageTexture_->setFormat( QOpenGLTexture::RGBFormat );
                 }
                 else
                 {
-                    qDebug() << "JQImageItemRenderer::render: unsupported image format:" << buffer;
-                    return;
+                    imageTexture_->setFormat( QOpenGLTexture::RGBAFormat );
                 }
+
+                imageTexture_->setSize( buffer.width(), buffer.height(), 1 );
+                imageTexture_->setAutoMipMapGenerationEnabled( false );
+                imageTexture_->setMipLevels( 1 );
+
+                imageTexture_->allocateStorage();
+
+                imageTexture_->setWrapMode( QOpenGLTexture::ClampToEdge );
+                imageTexture_->setMinificationFilter( QOpenGLTexture::Linear );
+                imageTexture_->setMagnificationFilter( QOpenGLTexture::Linear );
+            }
+
+            // 根据图片类型选择合适的setData
+            if ( buffer.format() == QImage::Format_Grayscale8 )
+            {
+                includesTransparentData_   = false;
+                includesPremultipliedData_ = false;
+                includesBGRData_           = false;
+                imageTexture_->setData( 0, QOpenGLTexture::Luminance, QOpenGLTexture::UInt8, buffer.constBits() );
+            }
+            else if ( buffer.format() == QImage::Format_RGB888 )
+            {
+                includesTransparentData_   = false;
+                includesPremultipliedData_ = false;
+                includesBGRData_           = false;
+                imageTexture_->setData( 0, QOpenGLTexture::RGB, QOpenGLTexture::UInt8, buffer.constBits() );
+            }
+            else if ( buffer.format() == QImage::Format_RGBA8888 )
+            {
+                includesTransparentData_   = true;
+                includesPremultipliedData_ = false;
+                includesBGRData_           = false;
+                imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
+            }
+            else if ( buffer.format() == QImage::Format_RGB32 )
+            {
+                includesTransparentData_   = false;
+                includesPremultipliedData_ = false;
+                includesBGRData_           = true;
+                imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
+            }
+            else if ( buffer.format() == QImage::Format_ARGB32 )
+            {
+                includesTransparentData_   = true;
+                includesPremultipliedData_ = false;
+                includesBGRData_           = true;
+                imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
+            }
+            else if ( buffer.format() == QImage::Format_ARGB32_Premultiplied )
+            {
+                includesTransparentData_   = true;
+                includesPremultipliedData_ = true;
+                includesBGRData_           = true;
+                imageTexture_->setData( 0, QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, buffer.constBits() );
             }
             else
             {
-                includesTransparentData_   = buffer.hasAlphaChannel();
-                includesPremultipliedData_ = false;
-                includesBGRData_           = false;
-
-                imageTexture_.reset( new QOpenGLTexture( buffer ) );
-                imageTexture_->setWrapMode( QOpenGLTexture::ClampToEdge );
-                imageTexture_->setAutoMipMapGenerationEnabled( false );
-                imageTexture_->setMinificationFilter( QOpenGLTexture::Linear );
-                imageTexture_->setMagnificationFilter( QOpenGLTexture::Linear );
+                qDebug() << "JQImageItemRenderer::render: unsupported image format:" << buffer;
+                return;
             }
         }
 
