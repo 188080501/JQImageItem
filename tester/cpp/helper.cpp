@@ -94,4 +94,9 @@ void Helper::setNextImage()
     {
         imageItem2_->setImage( imageList_[ imageIndex_ % imageList_.size() ] );
     }
+
+    // if ( ( imageIndex_ > imageList_.size() ) && imageItem_ )
+    // {
+    //     imageItem_->setImage( { } );
+    // }
 }

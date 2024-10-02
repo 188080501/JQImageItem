@@ -131,6 +131,12 @@ private:
 
     void render() override
     {
+        if ( skipRender_ )
+        {
+            this->glClear( GL_COLOR_BUFFER_BIT );
+            return;
+        }
+
         if ( !buffer_.isNull() )
         {
             mutex_.lock();
@@ -323,6 +329,8 @@ private:
     QMutex mutex_;
     QImage buffer_;
 
+    bool skipRender_ = true;
+
     bool includesTransparentData_    = false;
     bool includesPremultipliedData_  = false;
     bool includesBGRData_            = false;
@@ -368,7 +376,8 @@ void JQImageItem::setImage(const QImage &image)
             // 输入图片分辨率小于控件分辨率时, 保持图片分辨率，交由OpenGL完成缩放，这样传输性能更优，并且绘制性能也更好
 
             QMutexLocker locker( &renderer_->mutex_ );
-            renderer_->buffer_ = image;
+            renderer_->buffer_     = image;
+            renderer_->skipRender_ = false;
         }
         else
         {
@@ -376,13 +385,15 @@ void JQImageItem::setImage(const QImage &image)
             auto newImage = image.scaled( this->size().toSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
 
             QMutexLocker locker( &renderer_->mutex_ );
-            renderer_->buffer_ = newImage;
+            renderer_->buffer_     = newImage;
+            renderer_->skipRender_ = false;
         }
     }
     else
     {
         QMutexLocker locker( &renderer_->mutex_ );
-        renderer_->buffer_ = image;
+        renderer_->buffer_     = { };
+        renderer_->skipRender_ = true;
     }
 
     QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
