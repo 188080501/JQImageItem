@@ -17,6 +17,7 @@ Window {
     // 基于QQuickFramebufferObject
     JQImageItem {
         anchors.fill: parent
+        // smoothScale: false // 图片分辨率大于控件分辨率时，是否平滑缩放
 
         Component.onCompleted: {
             Helper.setImageItem( this );

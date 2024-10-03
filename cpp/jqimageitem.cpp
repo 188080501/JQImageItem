@@ -382,7 +382,10 @@ void JQImageItem::setImage(const QImage &image)
         else
         {
             // 输入图片分辨率大于控件分辨率时, 为了减少传输开销，在CPU端完成缩放，但是缩放时会占用一定的CPU资源
-            auto newImage = image.scaled( this->size().toSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+            auto newImage = image.scaled(
+                this->size().toSize(),
+                Qt::IgnoreAspectRatio,
+                ( smoothScale_ ) ? ( Qt::SmoothTransformation ) : ( Qt::FastTransformation ) );
 
             QMutexLocker locker( &renderer_->mutex_ );
             renderer_->buffer_     = newImage;
@@ -419,7 +422,10 @@ void JQImageItem2::setImage(const QImage &image)
 
     if ( !image.isNull() && ( image.size() != this->size().toSize() ) )
     {
-        buffer_ = image.scaled( this->size().toSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+        buffer_ = image.scaled(
+            this->size().toSize(),
+            Qt::IgnoreAspectRatio,
+            Qt::SmoothTransformation );
     }
     else
     {

@@ -19,6 +19,8 @@ class JQImageItem: public QQuickFramebufferObject
     Q_OBJECT
     Q_DISABLE_COPY( JQImageItem )
 
+    Q_PROPERTY( bool smoothScale READ smoothScale WRITE setSmoothScale NOTIFY smoothScaleChanged )
+
 public:
     JQImageItem() = default;
 
@@ -32,6 +34,14 @@ private:
 
 private:
     mutable JQImageItemRenderer *renderer_ = nullptr;
+
+    // Property statement code start
+private: bool smoothScale_ = true;
+public: inline bool smoothScale() const;
+public: inline void setSmoothScale(const bool &newValue);
+    Q_SIGNAL void smoothScaleChanged(const bool smoothScale);
+private:
+    // Property statement code end
 };
 
 class JQImageItem2: public QQuickPaintedItem
@@ -54,5 +64,12 @@ private:
     QMutex mutex_;
     QImage buffer_;
 };
+
+// Property accomplish code start
+inline bool JQImageItem::smoothScale() const
+{ return smoothScale_; }
+inline void JQImageItem::setSmoothScale(const bool &newValue)
+{ if ( newValue == smoothScale_ ) { return; } smoothScale_ = newValue; emit smoothScaleChanged( smoothScale_ ); }
+// Property accomplish code end
 
 #endif//JQLIBRARY_JQIMAGEITEM_H_
