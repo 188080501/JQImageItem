@@ -374,10 +374,12 @@ void JQImageItem::setImage(const QImage &image)
         if ( ( image.width() < this->width() ) && ( image.height() < this->height() ) )
         {
             // 输入图片分辨率小于控件分辨率时, 保持图片分辨率，交由OpenGL完成缩放，这样传输性能更优，并且绘制性能也更好
-
             QMutexLocker locker( &renderer_->mutex_ );
+
             renderer_->buffer_     = image;
             renderer_->skipRender_ = false;
+
+            QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
         }
         else
         {
@@ -387,19 +389,25 @@ void JQImageItem::setImage(const QImage &image)
                 Qt::IgnoreAspectRatio,
                 ( smoothScale_ ) ? ( Qt::SmoothTransformation ) : ( Qt::FastTransformation ) );
 
+            if ( !renderer_ ) { return; }
+
             QMutexLocker locker( &renderer_->mutex_ );
+
             renderer_->buffer_     = newImage;
             renderer_->skipRender_ = false;
+
+            QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
         }
     }
     else
     {
         QMutexLocker locker( &renderer_->mutex_ );
+
         renderer_->buffer_     = { };
         renderer_->skipRender_ = true;
-    }
 
-    QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
+        QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
+    }
 }
 
 QQuickFramebufferObject::Renderer *JQImageItem::createRenderer() const
