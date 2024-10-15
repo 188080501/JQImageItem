@@ -27,6 +27,8 @@ public:
     ~JQImageItem() override;
 
 public:
+    void setImage(const QImage &image, const Qt::TransformationMode scaleMode);
+
     void setImage(const QImage &image);
 
 private:

@@ -353,7 +353,7 @@ JQImageItem::~JQImageItem()
     }
 }
 
-void JQImageItem::setImage(const QImage &image)
+void JQImageItem::setImage(const QImage &image, const Qt::TransformationMode scaleMode)
 {
     if ( !image.isNull() &&
          ( image.format() != QImage::Format_Grayscale8 ) &&
@@ -387,7 +387,7 @@ void JQImageItem::setImage(const QImage &image)
             auto newImage = image.scaled(
                 this->size().toSize(),
                 Qt::IgnoreAspectRatio,
-                ( smoothScale_ ) ? ( Qt::SmoothTransformation ) : ( Qt::FastTransformation ) );
+                scaleMode );
 
             if ( !renderer_ ) { return; }
 
@@ -408,6 +408,11 @@ void JQImageItem::setImage(const QImage &image)
 
         QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
     }
+}
+
+void JQImageItem::setImage(const QImage &image)
+{
+    this->setImage( image, ( smoothScale_ ) ? ( Qt::SmoothTransformation ) : ( Qt::FastTransformation ) );
 }
 
 QQuickFramebufferObject::Renderer *JQImageItem::createRenderer() const
