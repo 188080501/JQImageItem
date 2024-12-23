@@ -31,6 +31,9 @@ public:
 
     void setImage(const QImage &image);
 
+public slots:
+    void clean();
+
 private:
     Renderer *createRenderer() const override;
 

@@ -415,6 +415,16 @@ void JQImageItem::setImage(const QImage &image)
     this->setImage( image, ( smoothScale_ ) ? ( Qt::SmoothTransformation ) : ( Qt::FastTransformation ) );
 }
 
+void JQImageItem::clean()
+{
+    QMutexLocker locker( &renderer_->mutex_ );
+
+    renderer_->buffer_     = { };
+    renderer_->skipRender_ = true;
+
+    QMetaObject::invokeMethod( this, "update", Qt::QueuedConnection );
+}
+
 QQuickFramebufferObject::Renderer *JQImageItem::createRenderer() const
 {
     renderer_ = new JQImageItemRenderer( [ & ](){ renderer_ = nullptr; } );
